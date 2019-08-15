@@ -39,8 +39,9 @@ The file "gt.mat" contains the following cell-arrays, each of size 1x858750:
 但是因为某些label本身标注错误，切割图片时会出现图片中word和gtlabel不匹配的情况。这个不好解决，就先不管了。
 '''
 
-mat_path = "/home/liming/data/SynthText/gt.mat"
-img_root = "/home/liming/data/SynthText/"
+#mat_path = "/home/liming/data/SynthText/gt.mat"
+#img_root = "/home/liming/data/SynthText/"
+#store_prepared_path = "/home/liming/data/prepare_lmdb"
 
 import scipy.io as scio
 
@@ -54,7 +55,9 @@ import cv2
 
 import numpy as np
 
+import os
 
+'''os.mkdir(store_prepared_path)
 data = scio.loadmat(mat_path)
 charb = data['charBB']
 # charb shape为(1,858750)
@@ -62,12 +65,12 @@ charb = data['charBB']
 name = data['imnames']
 # name shape为(1,858750)
 wordb = data['wordBB']
-label = data['txt']
+label = data['txt']'''
 
 # 需要一个函数，能把一串字符的空格去掉，并以回车符分开
 # 是为了去除原始label中的空格和换行
 # （原注释中每个的长度都用空格补到了30）
-def normalize_str(str):
+def normalize_str_old(str):
     str_list = str.split('\n')
     out_list = []
     for i_str in str_list:
@@ -78,12 +81,24 @@ def normalize_str(str):
         out_list.append(single_str)
     return out_list
 
+# 有些字符串是以空格分隔的，old方法没考虑到这个
+def normalize_str(str):
+    str = str.strip()
+    str_list = str.split('\n')
+    out_list = []
+    temp_list = []
+    for i_str in str_list:
+        i_str = i_str.strip()
+        temp_list = i_str.split(' ')
+        out_list += temp_list
+    return out_list
+
 # 输入序号，得到图片中的所有word的label，及其对应的wordBB，以及每个字符的BB
 # 图片名字就字符串格式
 # label的list应为[label0,label1]
 # wordBB应为字典，{label0:[[x1,x2,x3,x4],[y1,y2,y3,y4]],label1..}
 # charBB应为字典，{[labal0,char0]:[[x1,x2,x3,x4],[y1,y2,y3,y4]]},[label0,char1]..}
-def get_pic_info(num):
+def get_pic_info(data,num):
     pic_name = data['imnames'][0][num]
     pic_labels = []
     pic_wordBB = {}
@@ -111,7 +126,7 @@ def get_pic_info(num):
     return pic_name , pic_labels , pic_wordBB , pic_charBB
 
 
-def drow_point(pic_name , pic_labels , pic_wordBB , pic_charBB):
+def drow_point(pic_name , pic_labels , pic_wordBB , pic_charBB, img_root):
     path = img_root + pic_name.tostring().decode('utf-8')
     img_path = ''
     for b in path:
@@ -146,7 +161,10 @@ def drow_point(pic_name , pic_labels , pic_wordBB , pic_charBB):
     pylab.show()
 
 # 把完整图片切割成word级别图片
-def cut_pic(pic_name , pic_labels , pic_wordBB , pic_charBB):
+# 顺便返回所有图片的路径和label
+def cut_pic(pic_name , pic_labels , pic_wordBB , pic_charBB, prefix_store_path, img_root):
+    pic_path_list = []
+    pic_label_list = []
     rec_pic_name = ''
     for b in pic_name.tostring().decode('utf-8'):
         if b != b'\x00'.decode('utf-8'):
@@ -157,10 +175,14 @@ def cut_pic(pic_name , pic_labels , pic_wordBB , pic_charBB):
     i = 0
     for i_label in pic_labels:
         cropped = img[int(pic_wordBB[i_label][1][0]):int(pic_wordBB[i_label][1][2]), int(pic_wordBB[i_label][0][0]):int(pic_wordBB[i_label][0][2])]  # 裁剪坐标为[y0:y1, x0:x1]
-        store_path = rec_pic_name.split('.')[0].split('/')[1] + '_' + str(i)+ '_' + i_label + '.jpg'
+        store_path = rec_pic_name.split('.')[0].split('/')[1] + '_' + str(i)+ '_' + i_label + '.png'
+        store_path = prefix_store_path + '/' + store_path
         print(store_path)
+        pic_path_list.append(store_path)
+        pic_label_list.append(i_label)
         cv2.imwrite(store_path, cropped)
         i += 1
+    return pic_path_list, pic_label_list
 
 # 查看输出的格式
 def see_dtype(pic_name , pic_labels , pic_wordBB , pic_charBB):
@@ -172,6 +194,14 @@ def see_dtype(pic_name , pic_labels , pic_wordBB , pic_charBB):
     print('dtype pic label:',pic_labels[0].dtype)  # str
     print('dtype pic BB:',pic_wordBB[pic_labels[0]][0][0].dtype) #  float32
 
-pic_name , pic_labels , pic_wordBB , pic_charBB = get_pic_info(1)
-cut_pic(pic_name , pic_labels , pic_wordBB , pic_charBB)
-drow_point(pic_name , pic_labels , pic_wordBB , pic_charBB)
+# 切割好的图片放入data，并以create_lmdb_dataset要求的格式存储
+def build_lmdb_only_label(pic_name , pic_labels , pic_wordBB , pic_charBB, prefix_store_path, img_root):
+    path_list, label_list = cut_pic(pic_name , pic_labels , pic_wordBB , pic_charBB, prefix_store_path, img_root)
+    for path,label in zip(path_list,label_list):
+        txt_path = prefix_store_path + '/' + 'gt.txt'
+        with open (txt_path,'a') as f:
+            f.write(path + '\t' + label + '\n')
+
+#pic_name , pic_labels , pic_wordBB , pic_charBB = get_pic_info(data,464)
+#build_lmdb_only_label(pic_name , pic_labels , pic_wordBB , pic_charBB, store_prepared_path, img_root)
+#drow_point(pic_name , pic_labels , pic_wordBB , pic_charBB, img_root)
