@@ -44,8 +44,12 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
 
     nSamples = len(datalist)
     for i in range(nSamples):
-        imagePath, label = datalist[i].strip('\n').split('\t')
+        # 想在i能被1000整除时用作val集，所以被1000整除时跳过，以及一个不被整除时跳过
+        if i % 1000 == 0:
+            continue 
+        imagePath, label, maskPath, bb = datalist[i].strip('\n').split('\t')
         imagePath = os.path.join(inputPath, imagePath)
+        maskPath = os.path.join(inputPath, maskPath)
 
         # # only use alphanumeric data
         # if re.search('[^a-zA-Z0-9]', label):
@@ -67,10 +71,30 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
                     log.write('%s-th image data occured error\n' % str(i))
                 continue
 
+        if not os.path.exists(maskPath):
+            print('%s does not exist' % maskPath)
+            continue
+        with open(maskPath, 'rb') as f:
+            maskBin = f.read()
+        if checkValid:
+            try:
+                if not checkImageIsValid(maskBin):
+                    print('%s is not a valid image' % maskPath)
+                    continue
+            except:
+                print('error occured', i)
+                with open(outputPath + '/error_image_log.txt', 'a') as log:
+                    log.write('%s-th image data occured error\n' % str(i))
+                continue
+
         imageKey = 'image-%09d'.encode() % cnt
         labelKey = 'label-%09d'.encode() % cnt
+        maskKey = 'mask-%09d'.encode() % cnt
+        bbKey = 'bb-%09d'.encode() % cnt
         cache[imageKey] = imageBin
         cache[labelKey] = label.encode()
+        cache[maskKey] = maskBin
+        cache[bbKey] = bb.encode()
 
         if cnt % 1000 == 0:
             writeCache(env, cache)
