@@ -7,7 +7,7 @@ import numpy as np
 
 mat_path = "/home/liming/data/SynthText/gt.mat"
 img_root = "/home/liming/data/SynthText/"
-store_prepared_path = "/home/liming/data/ST_4lmdb_mask_bb"
+store_prepared_path = "/home/liming/data/ST_lmdb_mask_bb_prep/"
 
 if os.path.exists(store_prepared_path):
     pass

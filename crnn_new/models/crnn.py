@@ -8,12 +8,13 @@ filename = 'test_demo.txt'
 
 class BidirectionalLSTM(nn.Module):
 
-    def __init__(self, nIn, nHidden, nOut):
+    def __init__(self, nIn, nHidden, nOut, is_last=False):
         super(BidirectionalLSTM, self).__init__()
 
         self.rnn = nn.LSTM(nIn, nHidden, bidirectional=True)
         self.embedding = nn.Linear(nHidden * 2, nOut)
         self.nin = nIn
+        self.is_last = is_last
 
     def forward(self, input):
         recurrent, _ = self.rnn(input)
@@ -21,7 +22,10 @@ class BidirectionalLSTM(nn.Module):
         t_rec = recurrent.view(T * b, h)
 
         output = self.embedding(t_rec)  # [T * b, nOut]
-        output = output.view(T, b, -1)
+        if self.is_last:
+            output = output.view(b, T, -1)
+        else:
+            output = output.view(T, b, -1)
         '''
         # used to see the output of each litm buck
         print(self.nin)

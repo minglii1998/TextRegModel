@@ -5,7 +5,7 @@ import os
 import cv2
 from cv2 import cv2 as cv
 import h5py
-import dataset
+
 import utils
 import torch
 from torch.autograd import Variable
@@ -16,13 +16,13 @@ import sys
 from PIL import Image
 import matplotlib.pyplot as plt
 
-root = "/home/liming/data/ST_with_mask/"
+root = "/home/liming/data/ST_lmdb_mask_bb_val_6839/"
 root1 = "/mnt/data_share/text_recog/data_lmdb_release/evaluation/IC03_860/"
 #test_folder = 'testfolder'
 #os.mkdir(test_folder)
 
 
-# 遍历文件夹下的所有目录
+'''# 遍历文件夹下的所有目录
 
 test_path = r"/home/liming/code/expr_rightloss_2gpu/"
 g = os.walk(test_path)
@@ -36,12 +36,12 @@ for path,dir_list,file_list in g:
 for item in test_list:
     label_list.append(int(item.split('/')[-1].split('.')[0].split('_')[2]))
     
-print(max(label_list))
+print(max(label_list))'''
 
 
 
 # 尝试使用lmdb
-'''env = lmdb.open(
+env = lmdb.open(
     root,
     max_readers=1,
     readonly=True,
@@ -52,15 +52,16 @@ print(max(label_list))
 with env.begin(write=False) as txn:
     txn.cursor()
 
-for i in range(1,10):
+for i in range(100,101):
 
     Index = i+1
     mask_key = 'mask-%09d' % Index
     label_key = 'label-%09d' % Index
+    bb_key = 'bb-%09d' % Index
 
     with env.begin(write=False) as txn:
-        label_key = 'label-%09d' % Index
         label = txn.get(label_key.encode()).decode()
+        bb = txn.get(bb_key.encode()).decode()
 
         imgbuf = txn.get(mask_key.encode())
         buf = six.BytesIO()
@@ -68,7 +69,9 @@ for i in range(1,10):
         buf.seek(0)
         image = Image.open(buf).convert('L')
         print(label)
-    image.save(label+'.jpg')'''
+        print(len(eval(bb)))
+        print(eval(bb))
+    image.save(label+'.jpg')
 
 
 '''

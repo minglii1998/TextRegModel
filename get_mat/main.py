@@ -30,7 +30,7 @@ with open('pic_charbb.txt','w') as f:
   f.write(str(pic_charBB))'''
 path_list, label_list, mask_path_last, bb_list = cut_pic_old(pic_name , pic_labels , pic_wordBB , pic_charBB, store_prepared_path, img_root)
 # print(bb_list[0])
-bb_real_list =eval(bb_list[0])
+bb_real_list =eval(bb_list[4])
 bb_all = []
 word_len = len(bb_real_list)
 print(word_len)
@@ -51,7 +51,7 @@ for num in range(20):
     bb_all.append([-1,-1,-1,-1,-1,-1,-1,-1])
   
 print(bb_all)
-print(label_list[0])
+print(label_list[4])
 
 '''def ResizeImage(filein, fileout, width, height, type):
   img = Image.open(filein)

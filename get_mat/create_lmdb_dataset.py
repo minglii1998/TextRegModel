@@ -43,6 +43,7 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
         datalist = data.readlines()
 
     nSamples = len(datalist)
+    print('nSamples:',nSamples)
     for i in range(nSamples):
         # 想在i能被1000整除时用作val集，所以被1000整除时跳过，以及一个不被整除时跳过
         if i % 1000 == 0:
@@ -100,6 +101,7 @@ def createDataset(inputPath, gtFile, outputPath, checkValid=True):
             writeCache(env, cache)
             cache = {}
             print('Written %d / %d' % (cnt, nSamples))
+            print('i now:',i)
         cnt += 1
     nSamples = cnt-1
     cache['num-samples'.encode()] = str(nSamples).encode()

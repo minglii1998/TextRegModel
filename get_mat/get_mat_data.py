@@ -200,7 +200,7 @@ def cut_pic_old(pic_name , pic_labels , pic_wordBB , pic_charBB, prefix_store_pa
     pic_path_list = []
     pic_label_list = []
     mask_path_list = []
-    bb_list_temp = []
+    
     bb_list = []
     rec_pic_name = ''
     for b in pic_name.tostring().decode('utf-8'):
@@ -226,6 +226,7 @@ def cut_pic_old(pic_name , pic_labels , pic_wordBB , pic_charBB, prefix_store_pa
         #print(left,right,up,down)
 
         i_char = 0
+        bb_list_temp = []
         for _ in i_label:
             get_all_cropped_point(up,left,pic_charBB[i_label,i_char])
             bb_list_temp.append(pic_charBB[i_label,i_char])
@@ -253,7 +254,7 @@ def cut_pic_old(pic_name , pic_labels , pic_wordBB , pic_charBB, prefix_store_pa
         # debug_charBB_rotated(store_path,pic_charBB,i_label)
 
         i += 1
-    return pic_path_list, pic_label_list, mask_path_list,bb_list
+    return pic_path_list, pic_label_list, mask_path_list, bb_list
 
 # 用来得到旋转的角度
 def get_angle(x1,y1,x3,y3,x4,y4):

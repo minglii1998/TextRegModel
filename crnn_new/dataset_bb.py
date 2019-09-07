@@ -65,7 +65,7 @@ class lmdbDataset(Dataset):
             bb_real_list = eval(bb)
             bb_all = []
             word_len = len(bb_real_list)
-            print(word_len)
+            #print(word_len)
             char_count = 0
             for num in range(26):
                 bb8 = []
@@ -153,5 +153,7 @@ class alignCollate(object):
         transform = resizeNormalize((imgW, imgH))
         images = [transform(image) for image in images]
         images = torch.cat([t.unsqueeze(0) for t in images], 0)
+
+        bbs = torch.tensor(bbs)
 
         return images, bbs
